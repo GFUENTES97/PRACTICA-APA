@@ -12,7 +12,6 @@
 # Llegim les dades:
 
 Data <- read.csv("adult_data.csv")
-# Data <- read.csv("adult_data.csv", row.names = NULL)
 
 # Eliminem valors nulls:
 
