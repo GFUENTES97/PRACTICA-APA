@@ -8,9 +8,11 @@
 #########################################################################
 # 1. Pre-process the data and choose the variables you are going to use
 #########################################################################
+library(Caret)
 
 # Llegim les dades:
-DataAdult <- read.csv("adult_data.csv")
+Data <- read.csv("adult_data.csv", sep=";")
+
 
 # Seleccionem les variables a fer servir (eliminem la resta de columnes):
 # Veient que en les variables: fnlwgt, capital-loss, capital-gain
