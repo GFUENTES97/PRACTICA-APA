@@ -17,68 +17,21 @@ library(ggplot2)
 library (e1071)
 library(randomForest)
 
+source("auxiliar_functions.R")  # a file with auxiliary functions, to keep code cleaner
+LABELS <- c("<=50k", ">50k")    # a constant 
 
 # Llegim les dades:
 DataTraining.Categoric <- read.csv("adult_data.csv", sep=";")
 DataTest.Categoric <- read.csv("adult_test.csv", sep=";")
 
-# Seleccionem les variables a fer servir (eliminem la resta de columnes):
-# Veient que en les variables: fnlwgt, capital-loss, capital-gain
-# hi ha molts valors a 0 i NULLs, hem decidit
-# que no treballariem amb elles, per tant eliminem les columnes corresponents
-# de la matriu:
-
-DataTraining.Categoric$fnlwgt <- NULL
-DataTraining.Categoric$capital.loss <- NULL
-DataTraining.Categoric$capital.gain <- NULL
-
-DataTest.Categoric$fnlwgt <- NULL
-DataTest.Categoric$capital.loss <- NULL
-DataTest.Categoric$capital.gain <- NULL
-
-
-# Eliminem files amb valors NULLS a alguna variable:
-DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$age),]
-DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$workclass),]
-DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$education),]
-DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$education.num),]
-DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$marital.status),]
-DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$occupation),]
-DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$relationship),]
-DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$race),]
-DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$sex),]
-DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$hours.per.week),]
-DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$native.country),]
-
-DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$age),]
-DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$workclass),]
-DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$education),]
-DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$education.num),]
-DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$marital.status),]
-DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$occupation),]
-DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$relationship),]
-DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$race),]
-DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$sex),]
-DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$hours.per.week),]
-DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$native.country),]
-
+# Fem una neteja del dataset
+DataTraining.Categoric <- clean_dataset(DataTraining.Categoric)
+DataTest.Categoric <- clean_dataset(DataTest.Categoric)
 TotalData <- rbind(DataTraining.Categoric, DataTest.Categoric)
 
 # Apliquem One-Hot Encoding:
-dmy <- dummyVars(" ~ .", data = DataTraining.Categoric)
-DataTraining <- data.frame(predict(dmy, newdata = DataTraining.Categoric))
-
-DataTraining$workclass..NULL <- NULL
-DataTraining$occupation..NULL <- NULL
-DataTraining$native.country..NULL <- NULL
-
-dmy2 <- dummyVars(" ~ .", data = DataTest.Categoric)
-DataTest <- data.frame(predict(dmy2, newdata = DataTest.Categoric))
-
-DataTest$workclass..NULL <- NULL
-DataTest$occupation..NULL <- NULL
-DataTest$native.country..NULL <- NULL
-
+DataTraining <- one_hot_encoding(DataTraining.Categoric)
+DataTest <- one_hot_encoding(DataTest.Categoric)
 
 native.country..Holand.Netherlands <- rep(0,15060)
 DataTest <- add_column(DataTest, native.country..Holand.Netherlands, .before = "native.country..Honduras") # no hi ha valors
@@ -93,22 +46,26 @@ DataTraining.class <- DataTraining[,len]
 DataTest.input <- DataTest[,1:len-1]
 DataTest.class <- DataTest[,len]
 
-#########################################################################
-# 2. Perform a basic statistical description
-#########################################################################
+####################################################################################################
+# 2. Perform a basic statistical description 
+# 4. Visualize the data; if need be, cluster the data
+####################################################################################################
 
+# Small summary of the dataset
 summary(TotalData)
 
 # VARIABLE: AGE
 ages <- as.data.frame(table(TotalData$age))
 plot_ly(y=ages$Freq, x=ages$Var1 , type="scatter", mode="markers+lines")
 
-#comparing AGE-INCOME:
+# comparing AGE - INCOME:
 temp <- as.data.frame(cbind(TotalData$age, TotalData$income)); names(temp) <- c("AGE", "INCOME")
 ages <- sort(unique(TotalData$age))
+
 # percentage of <=50k for each age
 lower <- list()
 higher <- list()
+
 for(a in ages){
   tempValue <- as.numeric((table(temp[temp$AGE==a,][2])/nrow(temp[temp$AGE==a,])*100)[1])
   lower <- c(lower, as.integer(tempValue))
@@ -117,23 +74,64 @@ for(a in ages){
 
 ageIncome <- as.matrix(rbind(unlist(lower), unlist(higher)))
 colnames(ageIncome) <- ages
-rownames(ageIncome) <- c("<=50k", ">50k")
-barplot(ageIncome, col=c(1,2), border="white", font.axis=2, beside=T, legend=rownames(ageIncome), xlab="age", ylab="percentage", font.lab=2)
+rownames(ageIncome) <- LABELS
+
+# plot: Percentage of individuals earning >50k(red) / <=50k(black) depending on their age
+barplot(ageIncome, col=c(1,2), border="white", font.axis=2, beside=T, legend=LABELS, xlab="age", ylab="percentage", font.lab=2, args.legend = list(x = "topright", bty = "n", inset=c(.40, 0)))
 
 
-## HARÉ LO MISMO PARA EL RESTO DE VARIABLES
+## VARIABLE EDUCATION.NUM:
+education.levels <- as.data.frame(table(TotalData$education.num))
+plot_ly(y=education.levels$Freq, x=education.levels$Var1 , type="scatter", mode="markers+lines")
+
+# comparing Education.level - INCOME
+temp <- as.data.frame(cbind(TotalData$education.num, TotalData$income)); names(temp) <- c("EDUCATION", "INCOME")
+education.levels <- sort(unique(TotalData$education.num))
+
+# percentage of <=50k for each EDUCATION LEVEL
+lower <- list()
+higher <- list()
+for(a in education.levels){
+  tempValue <- as.numeric((table(temp[temp$EDUCATION==a,][2])/nrow(temp[temp$EDUCATION==a,])*100)[1])
+  lower <- c(lower, as.integer(tempValue))
+  higher <- c(higher, as.integer(100-tempValue))
+}
+
+eduIncome <- as.matrix(rbind(unlist(lower), unlist(higher)))
+colnames(eduIncome) <- education.levels
+rownames(eduIncome) <- LABELS
+# plot: Percentage of individuals earning >50k(red) / <=50k(black) depending on their education level
+barplot(eduIncome,col=c(1,2),border="white", font.axis=2, beside=T, legend=LABELS, xlab="education level", ylab="percentage", font.lab=2, args.legend = list(x = "topright", bty = "n", inset=c(.15, 0)))
+
+
+## VARIABLE HOURS.PER.WEEK:
+hours <- as.data.frame(table(TotalData$hours.per.week))
+plot_ly(y=hours$Freq, x=hours$Var1 , type="scatter", mode="markers+lines")
+
+# comparing hours.per.week - INCOME
+temp <- as.data.frame(cbind(TotalData$hours.per.week, TotalData$income)); names(temp) <- c("WEEK.HOURS", "INCOME")
+hours <- sort(unique(TotalData$hours.per.week))
+
+# percentage of <=50k for each Week-hours worked
+lower <- list()
+higher <- list()
+for(a in hours){
+  tempValue <- as.numeric((table(temp[temp$WEEK.HOURS==a,][2])/nrow(temp[temp$WEEK.HOURS==a,])*100)[1])
+  lower <- c(lower, as.integer(tempValue))
+  higher <- c(higher, as.integer(100-tempValue))
+}
+
+hoursIncome <- as.matrix(rbind(unlist(lower), unlist(higher)))
+colnames(hoursIncome) <- hours
+rownames(hoursIncome) <- LABELS
+barplot(hoursIncome,col=c(1,2),border="white", font.axis=2, beside=T, legend=LABELS, xlab="Hours per week", ylab="percentage", font.lab=2, args.legend = list(x = "topright", bty = "n", inset=c(.35, -.10)))
 
 
 #########################################################################
 # 3. Choose the resampling method to fit, select and test your models
 #########################################################################
 
-# En el nostre cas les dades de training i de test ja anaven donades.
-
-#########################################################################
-# 4. Visualize the data; if need be, cluster the data
-#########################################################################
-
+# En el nostre cas el dataset venia dividit en Train (66%) / Test (33%)
 
 #########################################################################
 # 5. Perform a full modelling process, using linear/quadratic techniques
@@ -144,7 +142,7 @@ barplot(ageIncome, col=c(1,2), border="white", font.axis=2, beside=T, legend=row
 
 
 # Optimitzem el millor valor de k
-# (triga molt, el millor és 10, veure Documentació)
+# (triga molt, el millor és 10, explicat a la Documentació)
 ###
 neighbours <- seq(1,10, 1)
 errors <- matrix (nrow=length(neighbours), ncol=2)
