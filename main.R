@@ -14,6 +14,8 @@ library(tibble)
 library(plotly)
 library(reshape2)
 library(ggplot2)
+library (e1071)
+library(randomForest)
 
 
 # Llegim les dades:
@@ -139,7 +141,12 @@ barplot(ageIncome, col=c(1,2), border="white", font.axis=2, beside=T, legend=row
 
 ### 1. The kNN classifier ###
 ###############################################
-neighbours <- seq(11,40, 2)
+
+
+# Optimitzem el millor valor de k
+# (triga molt, el millor és 10, veure Documentació)
+###
+neighbours <- seq(1,10, 1)
 errors <- matrix (nrow=length(neighbours), ncol=2)
 colnames(errors) <- c("k","LOOCV error")
 
@@ -152,14 +159,19 @@ for (i in c(1:length(neighbours)))
   tab <- table(myknn.cv, DataTraining.class)
   errors[i, "LOOCV error"] <- (1 - sum(tab[row(tab)==col(tab)])/sum(tab))*100
 }
-
 errors
+###
 
+# Veiem que a partir de K = 10 l'error ja no disminueix notablement, per
+# tant considerem k = 10 com la millor opció.
+
+ModelKnn.10 <- knn(DataTraining.input, DataTest.input, DataTraining.class, k = 10)
+
+(tab <- table(ModelKnn.10, DataTest.class))
+(1 - sum(tab[row(tab)==col(tab)])/sum(tab))*100
 
 ### 2. The Naïve Bayes classifier ###
 ###############################################
-library (e1071)
-
 ModelNaiveBayes <- naiveBayes(as.factor(income) ~ ., data = DataTraining.Categoric)
 
 # compute the test (prediction) error
@@ -190,11 +202,31 @@ gl1predt[gl1t>=P] <- 1
 # 6. Perform a full modelling process, using non-linear techniques
 #########################################################################
 
-### 1. MLP ###
+
+### 1. Suport Vector Machines ###
 ###############################################
 
-### 2. Suport Vector Machines ###
-###############################################
+# Anem a optimitzar gamma:
+
+vec.gamma <- c(1, 5, 10, 20, 50, 100, 150, 200, 250)
+errors <- matrix (nrow=length(vec.gamma), ncol=2)
+colnames(errors) <- c("gamma","error")
+
+for (i in c(1:length(vec.gamma)))
+{
+  mysvm <- svm (DataTraining.input,as.factor(DataTraining.class),epsilon=0.01, gamma = vec.gamma[i], kernel = "radial")
+  
+  errors[i, "gamma"] <- vec.gamma[i]
+  pred.rf <- predict (mysvm, DataTest.input)
+  
+  tab <-  table(Truth=DataTest.class, Pred=pred.rf)
+  errors[i, "error"] <- (1 - sum(tab[row(tab)==col(tab)])/sum(tab))*100
+  print(vec.gamma[i])
+}
+
+errors
+
+
 ModelSVM <- svm (DataTraining.input,as.factor(DataTraining.class),epsilon=0.01, kernel = "radial")
 
 # compute the test (prediction) error
@@ -204,5 +236,40 @@ pred <- predict(ModelSVM, DataTest.input)
 # form and display confusion matrix & overall error
 (tab <- table(Pred=pred, True=DataTest.class))
 (1 - sum(tab[row(tab)==col(tab)])/sum(tab))*100
+
+### 2. Random Forest ###
+###############################################
+
+# Anem a optimitzar el nombre d'arbres (ntree)
+
+vec.ntree <- c(1, 5, 10, 20, 50, 100, 250, 500, 1000, 2000)
+errors <- matrix (nrow=length(vec.ntree), ncol=2)
+colnames(errors) <- c("ntree","error")
+
+for (i in c(1:length(vec.ntree)))
+{
+  myrf <- randomForest (x = DataTraining.input, y=as.factor(DataTraining.class), ntree=vec.ntree[i], proximity=FALSE)
+  
+  errors[i, "ntree"] <- vec.ntree[i]
+  pred.rf <- predict (myrf, DataTest.input)
+  
+  tab <-  table(Truth=DataTest.class, Pred=pred.rf)
+  errors[i, "error"] <- (1 - sum(tab[row(tab)==col(tab)])/sum(tab))*100
+  print(vec.ntree[i])
+}
+
+errors
+
+# El millor es 20 (veure documentació), a partir d'aqui no millorem error
+
+
+ModelRandomForest <- randomForest(x = DataTraining.input, y=as.factor(DataTraining.class), ntree = 20, proximity=FALSE)
+
+pred.rf <- predict (ModelRandomForest, DataTest.input)
+
+(ct <- table(Truth=DataTest.class, Pred=pred.rf))
+
+# real test error is 
+round(100*(1-sum(diag(ct))/sum(ct)),2)
 
 #########################################################################
