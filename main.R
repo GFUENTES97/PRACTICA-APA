@@ -17,8 +17,8 @@ library(ggplot2)
 
 
 # Llegim les dades:
-DataAdult <- read.csv("adult_data.csv", sep=";")
-DataAdult2 <- read.csv("adult_test.csv", sep=";")
+DataTraining.Categoric <- read.csv("adult_data.csv", sep=";")
+DataTest.Categoric <- read.csv("adult_test.csv", sep=";")
 
 # Seleccionem les variables a fer servir (eliminem la resta de columnes):
 # Veient que en les variables: fnlwgt, capital-loss, capital-gain
@@ -26,52 +26,52 @@ DataAdult2 <- read.csv("adult_test.csv", sep=";")
 # que no treballariem amb elles, per tant eliminem les columnes corresponents
 # de la matriu:
 
-DataAdult$fnlwgt <- NULL
-DataAdult$capital.loss <- NULL
-DataAdult$capital.gain <- NULL
+DataTraining.Categoric$fnlwgt <- NULL
+DataTraining.Categoric$capital.loss <- NULL
+DataTraining.Categoric$capital.gain <- NULL
 
-DataAdult2$fnlwgt <- NULL
-DataAdult2$capital.loss <- NULL
-DataAdult2$capital.gain <- NULL
+DataTest.Categoric$fnlwgt <- NULL
+DataTest.Categoric$capital.loss <- NULL
+DataTest.Categoric$capital.gain <- NULL
 
 
 # Eliminem files amb valors NULLS a alguna variable:
-DataAdult <- DataAdult[!grepl("NULL", DataAdult$age),]
-DataAdult <- DataAdult[!grepl("NULL", DataAdult$workclass),]
-DataAdult <- DataAdult[!grepl("NULL", DataAdult$education),]
-DataAdult <- DataAdult[!grepl("NULL", DataAdult$education.num),]
-DataAdult <- DataAdult[!grepl("NULL", DataAdult$marital.status),]
-DataAdult <- DataAdult[!grepl("NULL", DataAdult$occupation),]
-DataAdult <- DataAdult[!grepl("NULL", DataAdult$relationship),]
-DataAdult <- DataAdult[!grepl("NULL", DataAdult$race),]
-DataAdult <- DataAdult[!grepl("NULL", DataAdult$sex),]
-DataAdult <- DataAdult[!grepl("NULL", DataAdult$hours.per.week),]
-DataAdult <- DataAdult[!grepl("NULL", DataAdult$native.country),]
+DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$age),]
+DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$workclass),]
+DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$education),]
+DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$education.num),]
+DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$marital.status),]
+DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$occupation),]
+DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$relationship),]
+DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$race),]
+DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$sex),]
+DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$hours.per.week),]
+DataTraining.Categoric <- DataTraining.Categoric[!grepl("NULL", DataTraining.Categoric$native.country),]
 
-DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$age),]
-DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$workclass),]
-DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$education),]
-DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$education.num),]
-DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$marital.status),]
-DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$occupation),]
-DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$relationship),]
-DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$race),]
-DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$sex),]
-DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$hours.per.week),]
-DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$native.country),]
+DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$age),]
+DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$workclass),]
+DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$education),]
+DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$education.num),]
+DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$marital.status),]
+DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$occupation),]
+DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$relationship),]
+DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$race),]
+DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$sex),]
+DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$hours.per.week),]
+DataTest.Categoric <- DataTest.Categoric[!grepl("NULL", DataTest.Categoric$native.country),]
 
-TotalData <- rbind(DataAdult, DataAdult2)
+TotalData <- rbind(DataTraining.Categoric, DataTest.Categoric)
 
 # Apliquem One-Hot Encoding:
-dmy <- dummyVars(" ~ .", data = DataAdult)
-DataTraining <- data.frame(predict(dmy, newdata = DataAdult))
+dmy <- dummyVars(" ~ .", data = DataTraining.Categoric)
+DataTraining <- data.frame(predict(dmy, newdata = DataTraining.Categoric))
 
 DataTraining$workclass..NULL <- NULL
 DataTraining$occupation..NULL <- NULL
 DataTraining$native.country..NULL <- NULL
 
-dmy2 <- dummyVars(" ~ .", data = DataAdult2)
-DataTest <- data.frame(predict(dmy2, newdata = DataAdult2))
+dmy2 <- dummyVars(" ~ .", data = DataTest.Categoric)
+DataTest <- data.frame(predict(dmy2, newdata = DataTest.Categoric))
 
 DataTest$workclass..NULL <- NULL
 DataTest$occupation..NULL <- NULL
@@ -137,22 +137,51 @@ barplot(ageIncome, col=c(1,2), border="white", font.axis=2, beside=T, legend=row
 # 5. Perform a full modelling process, using linear/quadratic techniques
 #########################################################################
 
+### 1. The kNN classifier ###
 
-## setup a kNN model with 3 neighbours
-## Notice there is no "learning" ... the data is the model (just test!)
+neighbours <- seq(1,sqrt(nrow(DataTraining.input)), 20)
+errors <- matrix (nrow=length(neighbours), ncol=2)
+colnames(errors) <- c("k","LOOCV error")
 
-myknn <- knn (DataTraining.input, DataTest.input, DataTraining.class, k = 2, prob=TRUE) 
+for (i in c(1:length(neighbours)))
+{
+  myknn.cv <- knn.cv (DataTraining.input, DataTraining.class, k = neighbours[i]) 
 
-####################################
-save(myknn, file = "myknn.mod")
+  errors[i, "k"] <- neighbours[i]
+  
+  tab <- table(myknn.cv, DataTraining.class)
+  errors[i, "LOOCV error"] <- (1 - sum(tab[row(tab)==col(tab)])/sum(tab))*100
+}
 
-load ("myknn.mod")
-####################################
+errors
 
-(tab <- table(myknn, DataTest.class))
+
+### 2. The Naïve Bayes classifier ###
+library (e1071)
+
+ModelNaiveBayes <- naiveBayes(as.factor(income) ~ ., data = DataTraining.Categoric)
+
+# compute the test (prediction) error
+pred <- predict(ModelNaiveBayes, DataTest.Categoric)
+
+# form and display confusion matrix & overall error
+(tab <- table(Pred=pred, True=DataTest.class))
 (1 - sum(tab[row(tab)==col(tab)])/sum(tab))*100
 
+### 3. Logistic Regression ###
 
+ModelGlm <- glm (income ~ ., data = DataTraining.Categoric)
+ModelGlm.AIC <- step (ModelGlm)
+
+gl1t <- predict(ModelGlm.AIC, newdata=DataTest.Categoric,type="response")
+gl1predt <- NULL
+P <- 0.5
+gl1predt[gl1t<P] <- 0
+gl1predt[gl1t>=P] <- 1
+
+(M1.TEtable <- table(Truth=DataTest.class,Pred=gl1predt))
+
+(100*(1-sum(diag(M1.TEtable))/nrow(DataTest.Categoric)))
 
 
 #########################################################################
