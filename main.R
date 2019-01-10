@@ -11,6 +11,10 @@
 library(caret)
 library(class)
 library(tibble)
+library(plotly)
+library(reshape2)
+library(ggplot2)
+
 
 # Llegim les dades:
 DataAdult <- read.csv("adult_data.csv", sep=";")
@@ -56,7 +60,7 @@ DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$sex),]
 DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$hours.per.week),]
 DataAdult2 <- DataAdult2[!grepl("NULL", DataAdult2$native.country),]
 
-
+TotalData <- rbind(DataAdult, DataAdult2)
 
 # Apliquem One-Hot Encoding:
 dmy <- dummyVars(" ~ .", data = DataAdult)
@@ -91,8 +95,32 @@ DataTest.class <- DataTest[,len]
 # 2. Perform a basic statistical description
 #########################################################################
 
-summary(DataAdult)
-# Falta comentar
+summary(TotalData)
+
+# VARIABLE: AGE
+ages <- as.data.frame(table(TotalData$age))
+plot_ly(y=ages$Freq, x=ages$Var1 , type="scatter", mode="markers+lines")
+
+#comparing AGE-INCOME:
+temp <- as.data.frame(cbind(TotalData$age, TotalData$income)); names(temp) <- c("AGE", "INCOME")
+ages <- sort(unique(TotalData$age))
+# percentage of <=50k for each age
+lower <- list()
+higher <- list()
+for(a in ages){
+  tempValue <- as.numeric((table(temp[temp$AGE==a,][2])/nrow(temp[temp$AGE==a,])*100)[1])
+  lower <- c(lower, as.integer(tempValue))
+  higher <- c(higher, as.integer(100-tempValue))
+}
+
+ageIncome <- as.matrix(rbind(unlist(lower), unlist(higher)))
+colnames(ageIncome) <- ages
+rownames(ageIncome) <- c("<=50k", ">50k")
+barplot(ageIncome, col=c(1,2), border="white", font.axis=2, beside=T, legend=rownames(ageIncome), xlab="age", ylab="percentage", font.lab=2)
+
+
+## HARÉ LO MISMO PARA EL RESTO DE VARIABLES
+
 
 #########################################################################
 # 3. Choose the resampling method to fit, select and test your models
