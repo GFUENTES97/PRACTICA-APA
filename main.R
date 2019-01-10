@@ -138,8 +138,8 @@ barplot(ageIncome, col=c(1,2), border="white", font.axis=2, beside=T, legend=row
 #########################################################################
 
 ### 1. The kNN classifier ###
-
-neighbours <- seq(1,sqrt(nrow(DataTraining.input)), 20)
+###############################################
+neighbours <- seq(11,40, 2)
 errors <- matrix (nrow=length(neighbours), ncol=2)
 colnames(errors) <- c("k","LOOCV error")
 
@@ -157,6 +157,7 @@ errors
 
 
 ### 2. The Naïve Bayes classifier ###
+###############################################
 library (e1071)
 
 ModelNaiveBayes <- naiveBayes(as.factor(income) ~ ., data = DataTraining.Categoric)
@@ -169,6 +170,7 @@ pred <- predict(ModelNaiveBayes, DataTest.Categoric)
 (1 - sum(tab[row(tab)==col(tab)])/sum(tab))*100
 
 ### 3. Logistic Regression ###
+###############################################
 
 ModelGlm <- glm (income ~ ., data = DataTraining.Categoric)
 ModelGlm.AIC <- step (ModelGlm)
@@ -186,4 +188,20 @@ gl1predt[gl1t>=P] <- 1
 
 #########################################################################
 # 6. Perform a full modelling process, using non-linear techniques
+#########################################################################
+
+### 1. MLP ###
+###############################################
+
+### 2. Suport Vector Machines ###
+###############################################
+ModelSVM <- svm (DataTraining.input,DataTraining.class,epsilon=0.01)
+
+# compute the test (prediction) error
+pred <- predict(ModelSVM, DataTest.input)
+
+# form and display confusion matrix & overall error
+(tab <- table(Pred=pred, True=DataTest.class))
+(1 - sum(tab[row(tab)==col(tab)])/sum(tab))*100
+
 #########################################################################
