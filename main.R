@@ -195,10 +195,11 @@ gl1predt[gl1t>=P] <- 1
 
 ### 2. Suport Vector Machines ###
 ###############################################
-ModelSVM <- svm (DataTraining.input,DataTraining.class,epsilon=0.01)
+ModelSVM <- svm (DataTraining.input,as.factor(DataTraining.class),epsilon=0.01, kernel = "radial")
 
 # compute the test (prediction) error
 pred <- predict(ModelSVM, DataTest.input)
+
 
 # form and display confusion matrix & overall error
 (tab <- table(Pred=pred, True=DataTest.class))
