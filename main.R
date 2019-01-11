@@ -27,7 +27,12 @@ DataTest.Categoric <- read.csv("adult_test.csv", sep=";")
 # Fem una neteja del dataset
 DataTraining.Categoric <- clean_dataset(DataTraining.Categoric)
 DataTest.Categoric <- clean_dataset(DataTest.Categoric)
+
 TotalData <- rbind(DataTraining.Categoric, DataTest.Categoric)
+
+# la variable auxiliar unicament la fem servir a "TotalData"
+DataTraining.Categoric$var.aux <- NULL
+DataTest.Categoric$var.aux <- NULL
 
 # Apliquem One-Hot Encoding:
 DataTraining <- one_hot_encoding(DataTraining.Categoric)
@@ -38,7 +43,7 @@ DataTest <- add_column(DataTest, native.country..Holand.Netherlands, .before = "
 
 
 # Separem els parametres de la columna a predir
-len <- length(DataTraining)
+len <- length(DataTraining) - 1  # hem afegit una variable auxiliar
 
 DataTraining.input <- DataTraining[,1:len-1]
 DataTraining.class <- DataTraining[,len]
@@ -125,6 +130,16 @@ hoursIncome <- as.matrix(rbind(unlist(lower), unlist(higher)))
 colnames(hoursIncome) <- hours
 rownames(hoursIncome) <- LABELS
 barplot(hoursIncome,col=c(1,2),border="white", font.axis=2, beside=T, legend=LABELS, xlab="Hours per week", ylab="percentage", font.lab=2, args.legend = list(x = "topright", bty = "n", inset=c(.35, -.10)))
+
+
+# Quina de les 3 variables numèriques és la més determinant?
+#
+#
+featurePlot(x=TotalData[,c(1,4,10)], y=TotalData[,13], plot="density", scales=list(x=list(relation="free"), y=list(relation="free")), auto.key=list(columns=2))
+#
+# podem veure que "age" és la unica que mostra una clara diferència:
+# les probabilitats de que un individu guanyi més de 50k augmenten notablement
+# si aquest té entre 40 i 60 anys
 
 
 #########################################################################
