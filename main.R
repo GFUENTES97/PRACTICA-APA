@@ -43,7 +43,7 @@ DataTest <- add_column(DataTest, native.country..Holand.Netherlands, .before = "
 
 
 # Separem els parametres de la columna a predir
-len <- length(DataTraining) - 1  # hem afegit una variable auxiliar
+len <- length(DataTraining)
 
 DataTraining.input <- DataTraining[,1:len-1]
 DataTraining.class <- DataTraining[,len]
